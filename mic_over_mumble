@@ -28,8 +28,6 @@ function main () {
     echo "Starting Mumble client..."
     MUMBLE_CLIENT_ID=$(run_mumble_client_bg)
     sleep 15
-    echo "Fetching PulseAudio configuration..."
-    MUMBLE_CLIENT_PAID=$(get_mumble_client_paid)
 
     echo "Changing PulseAudio configuration..."
     echo "Adding sink..."
@@ -37,11 +35,10 @@ function main () {
     sleep 3
 
     echo "Fetching current configuration to redirect Mumble..."
+    MUMBLE_CLIENT_PAID=$(get_mumble_client_paid)
     SINK_PAID=$(get_sink_paid)
-    pacmd move-sink-input "$MUMBLE_CLIENT_PAID" "$SINK_PAID"
 
-    echo "Adding a virtual microphone..."
-    SOURCE_MODULE_PAID=$(add_source)
+    pacmd move-sink-input "$MUMBLE_CLIENT_PAID" "$SINK_PAID"
 
     echo "Done. Please use pavucontrol to ensure everything works."
     echo "Press Return to shut down..."
@@ -82,7 +79,7 @@ function get_mumble_client_paid () {
         grep -F -e "index: " -e "media.name = " |
         cut_every_second_newline |
         grep -F -e "Mumble" |
-        print_second_column
+        awk '{print $2}'
 }
 
 function add_sink () {
@@ -105,16 +102,12 @@ function get_sink_paid () {
         grep -F -e "index: " -e "name: " |
         cut_every_second_newline |
         grep -F -e "Loopback" |
-        print_second_column
+        awk '{print $3}'
 }
 
 # https://serverfault.com/a/375098/449626
 function cut_every_second_newline () {
     awk 'ORS=NR%2?" ":"\n"'
-}
-
-function print_second_column () {
-    awk '{print $2}'
 }
 
 main
